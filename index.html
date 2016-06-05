@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Código tutorial fullStack PHP + jQuery</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- CSS para librería Toastr -->
+    <link href="css/toastr.min.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <style>
+        body {
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        #containerEdit {
+            display: none;
+        }
+        /* .tblGatos {
+            border: 1px;
+            border-color: #aaaaaa;
+            display: block;
+            width: 100%;
+        } */
+        
+        .tblGatos tr:hover {
+            background-color: #33dddd;
+        }
+    </style>
+
+
+</head>
+
+<body>
+
+    <!-- Page Content -->
+    <div class="container">
+
+        <div class="row">
+            <div class="col-lg-4 col-lg-offset-4">
+                <h2>Operación READ</h2>
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2">
+                <div id="contenidoTodosLosGatos"></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-4 col-lg-offset-2">
+                <button class="btn-primary" onclick="cargarTodosLosGatos()">Cargar todos los gatos</button>
+            </div>
+            <div class="col-lg-4 col-lg-offset-2">
+                <button class="btn-primary" onclick="deleteGatos()">Borrar seleccionados</button>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="row">
+                <div class="col-lg-4 col-lg-offset-4">
+                    <h2>Operación CREATE</h2>
+                </div>
+            </div>
+            <br />
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 col-lg-offset-3">
+                <form id='frmNuevoGato'>
+                <table>
+                    <tr>
+                        <td><b>Nombre: </b></td>
+                        <td>
+                            <input size='80' class="form-control" type="text" id="nombreNuevoGato" name="nombreNuevoGato" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Raza: </b></td>
+                        <td>
+                            <input size='80' class="form-control" type="text" id="razaNuevoGato" name="razaNuevoGato" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Color: </b></td>
+                        <td>
+                            <input size='80' class="form-control" type="text" id="colorNuevoGato" name="colorNuevoGato" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Edad: </b></td>
+                        <td>
+                            <input class="form-control" type="number" id="edadNuevoGato" name="edadNuevoGato" />
+                        </td>
+                    </tr>
+                </table>
+                </form>
+            </div>
+        </div>
+
+        <br /><br />
+
+        <div class="row">
+            <div class="col-lg-2 col-lg-offset-5">
+                <button class="btn-primary" onclick="insertarNuevoGato()">Insertar nuevo gato</button>
+            </div>
+        </div>
+
+        <div id="containerEdit">
+            <div class="row">
+                <div class="col-lg-4 col-lg-offset-4">
+                    <h2>Operación UPDATE</h2>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-6 col-lg-offset-3">
+                    <form id='frmEditGato'>
+                    <table>
+                        <tr>
+                            <td><b>Nombre: </b></td>
+                            <td>
+                                <input size='80' class="form-control" type="text" id="nombreEditGato" name="nombreEditGato" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><b>Raza: </b></td>
+                            <td>
+                                <input size='80' class="form-control" type="text" id="razaEditGato" name="razaEditGato" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><b>Color: </b></td>
+                            <td>
+                                <input size='80' class="form-control" type="text" id="colorEditGato" name="colorEditGato" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><b>Edad: </b></td>
+                            <td>
+                                <input class="form-control" type="number" id="edadEditGato" name="edadEditGato" />
+                            </td>
+                        </tr>
+                        <input type="hidden" id="uuidEditGato" name="uuidEditGato" value="-1" />
+                    </table>
+                    </form>
+                </div>
+            </div>
+
+            <br /><br />
+
+            <div class="row">
+                <div class="col-lg-2 col-lg-offset-5">
+                    <button class="btn-primary" onclick="editarGato()">Editar gato</button>
+                </div>
+            </div>
+            
+        </div>
+
+    </div>
+    <!-- /.container -->
+
+    <!-- jQuery Version 1.11.1 -->
+    <script src="js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- Librería Toastr -->
+    <script src="js/toastr.min.js"></script>
+
+    <script>
+        toastr.options = {
+            "closeButton": false,
+            "debug": false,
+            "newestOnTop": false,
+            "progressBar": false,
+            "positionClass": "toast-bottom-right",
+            "preventDuplicates": false,
+            "onclick": null,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+        };
+    </script>
+
+
+    <script src="js/programa.js"></script>
+
+</body>
+
+</html>

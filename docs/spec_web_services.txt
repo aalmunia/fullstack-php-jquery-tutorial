@@ -1,0 +1,52 @@
+CREATE
+
++ Entrada
+
+    - nombre (String)
+    - raza (String)
+    - color (String)
+    - edad (Integer)
+    
++ Salida
+
+    - error (Boolean)
+    - code (OK/KO)
+    
+    
+READ
+
++ Entrada
+
++ Salida
+
+    - error (Boolean)
+    - code (OK/KO)
+    - data (Array[Object])
+    
+    
+UPDATE
+
++ Entrada
+
+    - nombre (String) ?
+    - raza (String) ?
+    - color (String) ?
+    - edad (Integer) ?
+    - uuid (String)
+    
++ Salida
+
+    - error (Boolean)
+    - code (OK/KO)
+    
+    
+DELETE
+
++ Entrada
+
+    - uuids_delete (Array[String])
+    
++ Salida
+    
+    - error (Boolean)
+    - code (OK/KO)

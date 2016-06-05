@@ -1,0 +1,444 @@
+En este artículo (pensado para nivel básico - medio), vamos a ver como funciona una petición HTTP usando AJAX, a un servicio web que también definiremos nosotros. En esencia, lo que estamos implementando son servicios web y consumiéndolos desde la página web, usando AJAX. Para ello, las tecnologías y librerías que vamos a usar son las siguientes: 
+<ul>
+  <li>jQuery 1.11</li>
+  <li>PHP 5.x</li>
+  <li>MySQL Community Edition</li>
+  <li>Bootstrap 3</li>
+  <li>Toastr</li>    
+</ul>
+
+El objetivo del ejercicio es llegar a implementar un CRUD completo de la entidad Gato, que vamos a definir a continuación: 
+<ul>
+  <li>Nombre</li>
+  <li>Raza</li>
+  <li>Color</li>
+  <li>Edad</li>
+</ul>
+
+Lo primero que deberíamos hacer es crear la base de datos con la que vamos a trabajar. Abrimos nuestro gestor favorito de MySQL (yo uso MySQL Workbench), y ejecutaremos la siguiente sentencia SQL: 
+
+<figure>
+  <figcaption class="filenameCode">db_export.sql</figcaption>
+  <pre class="EnlighterJSRAW" data-enlighter-language="sql">
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+CREATE DATABASE gatos;
+DROP TABLE IF EXISTS `gatos`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `gatos` (
+  `uuid` varchar(255) NOT NULL DEFAULT 'UUID()',
+  `nombre` varchar(255) NOT NULL,
+  `raza` varchar(255) NOT NULL,
+  `color` varchar(255) NOT NULL,
+  `edad` int(12) NOT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+LOCK TABLES `gatos` WRITE;
+/*!40000 ALTER TABLE `gatos` DISABLE KEYS */;
+INSERT INTO `gatos` VALUES ('469db2fc-25b1-11e6-9a47-d8cb8a1bff9d','Mr. Midnight','Common','Black',15),('5cc18704-25b1-11e6-9a47-d8cb8a1bff9d','Cole','Common','Black',6),('697eff8e-25b1-11e6-9a47-d8cb8a1bff9d','Marmalade','Common','Tigerlike',3),('b5570287-25a4-11e6-9a47-d8cb8a1bff9d','Yuna','Common','Grey',6),('b55af55d-25a4-11e6-9a47-d8cb8a1bff9d','Joya','Siamese','White',13),('b55f549c-25a4-11e6-9a47-d8cb8a1bff9d','Merlin','Common','Tigerlike',8),('c62254c3-25b1-11e6-9a47-d8cb8a1bff9d','Playful','Abisinian','Cream',3),('d23b217d-25b2-11e6-9a47-d8cb8a1bff9d','Yuri','Common','Black',0);
+/*!40000 ALTER TABLE `gatos` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;  
+  </pre>
+</figure>
+
+De esta forma, tendremos nuestra base de datos llamada gatos con la tabla gatos creada, con algunos gatos introducidos en ella. Ahora, tenemos que definir los servicios web. Para ello, especificaremos una serie de parámetros de entrada y de salida para cada operación que queramos realizar, como sigue: 
+ 
+<h3>CREATE</h3>
+
+<h5>Entrada</h5>
+
+<table border='1'>
+    <tr>
+        <td>nombre (String)</td><td>raza (String)</td><td>color (String)</td><td>edad (Integer)</td>
+    </tr>
+</table>
+    
+<h5>Salida</h5>
+
+<table border='1'>
+    <tr>
+        <td>error (Boolean)</td><td>code (OK/KO)</td>
+    </tr>
+</table>    
+<br /><br />
+
+
+<h3>READ</h3>
+
+<h5>Entrada</h5>
+
+<h5>Salida</h5>
+
+<table border='1'>
+    <tr>
+        <td>error (Boolean)</td><td>code (OK/KO)</td><td>data (Array[Object])</td>
+    </tr>
+</table>
+<br /><br />
+
+    
+<h3>UPDATE</h3>
+
+<h5>Entrada</h5>
+
+<table border='1'>
+    <tr>
+        <td>nombre (String) ?</td><td>raza (String) ?</td><td>color (String) ?</td><td>edad (Integer) ?</td><td>uuid (String)</td>
+    </tr>
+</table>
+    
+<h5>Salida</h5>
+
+<table border='1'>
+    <tr>
+        <td>error (Boolean)</td><td>code (OK/KO)</td>
+    </tr>
+</table>    
+<br /><br />
+    
+<h3>DELETE</h3>
+
+<h5>Entrada</h5>
+
+<table border='1'>
+    <tr>
+        <td>uuids_delete (Array[String])</td>
+    </tr>
+</table>
+    
+<h5>Salida</h5>
+    
+<table border='1'>
+    <tr>
+        <td>error (Boolean)</td><td>code (OK/KO)</td>
+    </tr>
+</table>    
+<br /><br />
+
+A diferencia de el tutorial en el que se implementaba este mismo ejercicio usando NodeJS, en este caso vamos a usar PHP para implementar  los accesos a base de datos. PHP es un lenguaje bastante sencillo, que, con el tiempo se ha convertido en la <i>lingua franca</i> de internet. Casi todos los desarrolladores web entienden PHP, en mayor o menor medida en función del uso diario que le den. No vamos a implementar ningún framework, de momento, para entender primeramente como implementar esta infraestructura de servicios, para mas adelante, en un artículo posterior, ver como realizar la misma tarea usando un framework para ello. Tendremos pues, cuatro ficheros diferentes, que vamos a llamar de la siguiente forma:
+
+<ul>
+  <li>create_gato.php</li>
+  <li>read_gato.php</li>
+  <li>update_gato.php</li>
+  <li>delete_gato.php</li>      
+</ul>
+
+¿Podríamos tener todos los servicios en el mismo fichero? Si, se podría, y realmente esta implementación que vamos a ver sirve mucho como ejemplo, pero en un entorno de trabajo, generalmente no sería el modo de hacerlo. Pero, en favor de la claridad, vamos a separar las operaciones cada una en su propio archivo.
+
+La primera operación que vamos a implementar es READ, por ser la mas sencilla de momento. Lo primero de todo, es abrir una conexión contra la base de datos MySQL, y ejecutar una consulta de tipo <b>SELECT</b>, y obtener los registros de la entidad. Veamos el código fuente del servicio de lectura de datos:
+
+<figure>
+  <figcaption class="filenameCode">/php/read_gato.php</figcaption>
+  <pre class="EnlighterJSRAW" data-enlighter-language="php">
+$oConn = mysqli_connect("127.0.0.1", "root", "", "gatos");
+$sSQLSelectAll = "SELECT uuid, nombre, raza, color, edad FROM gatos ORDER BY nombre ASC";
+$oExecQuery = mysqli_query($oConn, $sSQLSelectAll);
+$iNumRows = mysqli_num_rows($oExecQuery);
+$iNumColumns = mysqli_num_fields($oExecQuery);
+$oAllData = Array();
+for($i=0;$i<$iNumRows;$i++) {    
+    $oAllData[$i] = mysqli_fetch_row($oExecQuery);
+} 
+echo json_encode($oAllData);
+  </pre>
+</figure>
+
+Analicemos el código fuente un poco. Primero tenemos la conexión a MySQL, y la ejecución de la consulta, con el código que vemos a continuación:
+
+<figure>
+  <figcaption class="filenameCode">/php/read_gato.php</figcaption>
+  <pre class="EnlighterJSRAW" data-enlighter-language="php" data-enlighter-linenumbers="false">
+$oConn = mysqli_connect("127.0.0.1", "root", "", "gatos");
+$sSQLSelectAll = "SELECT nombre, raza, color, edad FROM gatos ORDER BY nombre ASC";
+$oExecQuery = mysqli_query($oConn, $sSQLSelectAll);
+  </pre>  
+</figure>
+
+<b>oConn</b> es el objeto de conexión a la base de datos MySQL. Se necesita para cualquier consulta que se realice contra la base de datos. Los parámetros que recibe la función <b>mysqli_connect()</b> son los siguientes: <b>HOST BASE DE DATOS, NOMBRE DE USUARIO, PASSWORD USUARIO, NOMBRE BASE DE DATOS</b> ¿Qué es la variable <b>$oExecQuery</b>? Es lo que se llama como un <i>Objeto de resultado</i>, o en inglés <i>Recordset</i>. En función del lenguaje de programación que estemos usando, los recordsets tienen una forma concreta de ser accedidos. En el caso de PHP, si queremos obtener todos los campos de todas las filas, realizaremos lo siguiente: 
+
+<figure>
+  <figcaption class="filenameCode">/php/read_gato.php</figcaption>
+  <pre class="EnlighterJSRAW" data-enlighter-language="php" data-enlighter-linenumbers="false">
+$iNumRows = mysqli_num_rows($oExecQuery);
+$iNumColumns = mysqli_num_fields($oExecQuery);
+$oAllData = Array();
+for($i=0;$i<$iNumRows;$i++) {
+  $oAllData[$i] = mysqli_fetch_row($oExecQuery);
+}
+  </pre>
+</figure>
+
+El array resultante es de dos dimensiones, porque los elementos de la dimensión 1 son arrays. Así pues, es una representación de la tabla de base de datos, con los registros que nuestra instrucción <b>SELECT</b> haya obtenido. Por último, devolvemos ese array en formato de JSON. En PHP es muy sencillo hacer esto: 
+
+<figure>
+  <figcaption class="filenameCode">/php/read_gato.php</figcaption>
+  <pre class="EnlighterJSRAW" data-enlighter-language="php" data-enlighter-linenumbers="false">
+echo json_encode($oAllData);
+  </pre>
+</figure>
+
+Esto está muy bien, pero no sirve para nada. Podemos sacar datos de nuestra base de datos, pero, ¿cómo hacemos interaccionar eso con una aplicación web que hayamos diseñado? Usando AJAX. Y para ello, directamente vamos a ver como se hace usando jQuery. Existe un nivel por debajo, que jQuery encapsula, usando el objeto XMLHTTPRequest. Es interesante, por puro conocimiento, ver como está implementado, y puede que en algún momento muy concreto se tenga que usar, pero el 99% de todo el AJAX que queramos hacer se puede realizar usando jQuery. Veamos, pues, como obtener los datos del script <b>read_gato.php</b>
+
+<figure>
+  <figcaption class="filenameCode">/js/programa.js</figcaption>
+  <pre class="EnlighterJSRAW" data-enlighter-language="js" data-enlighter-linenumbers="false">
+var oGlobalGatos = null;
+
+function renderTablaTodosLosGatos(oDatosGatos) {
+    var sHTMLAdd = "<table width='100%' border='1' class='tblGatos'>";
+    sHTMLAdd += "<thead><td></td><td>NOMBRE</td><td>RAZA</td><td>COLOR</td><td>EDAD</td><td></td></thead>";
+    for (var i = 0; i < oDatosGatos.length; i++) {
+        sHTMLAdd += "<tr>";
+        sHTMLAdd += "<td><input class='chkUUIDGato' type='checkbox' id='gato_" + oDatosGatos[i][0] + "' /></td>";
+        // Comenzamos por el elemento 1 para obviar la columna UUID
+        for (var j = 1; j < oDatosGatos[i].length; j++) {
+            sHTMLAdd += "<td>" + oDatosGatos[i][j] + "</td>";
+        }
+        sHTMLAdd += "<td><button class='btn-primary'  onclick='cargarDatosEdit(" + i + ")'>Editar</button></td>";
+        sHTMLAdd += "</tr>";
+    }
+    sHTMLAdd += "</table><br />";
+    return sHTMLAdd;
+}
+
+function cargarTodosLosGatos() {
+    $.ajax({       
+        url: 'php/read_gato.php',
+        method: 'GET',
+        dataType: 'json',
+        timeout: 5000,
+        success: function (oDatosGatos) {
+            if(b_GLOBAL_Debug) {                
+                toastr.success("Datos de gatos cargados");                
+            }
+            oGlobalGatos = oDatosGatos;
+            var sHTMLAdd = renderTablaTodosLosGatos(oDatosGatos);            
+            $("#contenidoTodosLosGatos").html(sHTMLAdd);            
+        },
+        error: handleAjaxError,        
+        complete: handleAjaxComplete
+    });
+}
+</pre>
+</figure>
+
+<figure>
+  <figcaption class="filenameCode">index.html</figcaption>
+  <pre class="EnlighterJSRAW" data-enlighter-language="html" data-enlighter-linenumbers="false">  
+&lt;div class="row"&gt;
+    &lt;div class="col-lg-4 col-lg-offset-4"&gt;
+        &lt;h2&gt;Operación READ&lt;/h2&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;br /&gt;
+&lt;div class="row"&gt;
+    &lt;div class="col-lg-8 col-lg-offset-2"&gt;
+        &lt;div id="contenidoTodosLosGatos"&gt;&lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="row"&gt;
+    &lt;div class="col-lg-4 col-lg-offset-2"&gt;
+        &lt;button class="btn-primary" onclick="cargarTodosLosGatos()"&gt;Cargar todos los gatos&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;div class="col-lg-4 col-lg-offset-2"&gt;
+        &lt;button class="btn-primary" onclick="borrarGatosSeleccionados()"&gt;Borrar seleccionados&lt;/button&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+  </pre>
+</figure>
+
+
+Analicemos un poco lo que estamos haciendo. Le decimos que queremos acceder a la URL <b>http://127.0.0.1/fullStackSample/php/read_gato.php</b>. Observemos que el <b>host</b> o IP de la máquina, es la misma en la que tenemos alojada nuestra página web, dentro de la carpeta <b>/fullStackSample</b> a partir de la raíz del servidor web. Dentro de la estructura de directorios de nuestra aplicación tenemos una carpeta <b>/php</b>, en la que están los scripts que actúan de servicios web. Es importante que cuando realicemos una petición AJAX, el servicio web esté en el mismo host que la página que realiza la llamada. Más sobre este tema en un futuro, de momento, sigamos esta consideración y alojemos toda nuestra aplicación en la carpeta indicada. 
+
+Prueba a abrir el script directamente en el navegador, yendo a la URL <b>http://127.0.0.1/fullStackSample/php/read_gato.php</b>, y verás que el resultado de acceder al script es una estructura de datos JSON con todos los registros. Instálate algún plugin de Chrome / Firefox / Internet Explorer que te parsée el JSON, o copia el contenido, ve a http://jsonlint.com y que te lo idente para poder leerlo.
+
+El acceder a la URL hace que se ejecute el script, sea a través de un navegador que apunta a la URL, o de una petición AJAX. Por tanto, se devuelve la estructura de datos JSON al cliente que haya accedido a este servicio. ¿Y qué hacemos desde JavaScript, que es donde recibimos el servicio? Vamos a ver qué callbacks admiten las llamadas a <b>$.ajax</b>, acorde a la especificación de jQuery:
+
+<h3>error: function(oXMLHTTPReq, sStatusText, sErrorThrown)</h3>Este es el callback que debemos suministrar para la correcta captura y procesamiento del evento 'error' dentro de nuestra llamada AJAX. Como nos interesa que todos los mensajes de error se nos muestren, en tanto estemos en modo de desarrollo de nuestra aplicación, vamos a implementar la siguiente función de gestión de errores de AJAX:
+
+<figure>
+  <figcaption class="filenameCode">/js/programa.js</figcaption>
+  <pre class="EnlighterJSRAW" data-enlighter-language="js" data-enlighter-linenumbers="false">
+function handleAjaxError(oXMLHTTPReq, sStatusText, sErrorThrown) {
+    console.log('Entrando en error');
+    console.log(oXMLHTTPReq);
+    if(sStatusText == 'timeout') {
+        toastr.info('La request AJAX no ha respondido a tiempo (timeout de 5 segundos)');
+    } else {
+        toastr.error(sErrorThrown);
+    }
+}
+  </pre>
+</figure>
+
+<h3>success: function(oData)</h3>Este es el callback que debemos suministrar para la correcta captura y procesamiento del evento 'success', que se se produce cuando el servicio devuelve un código HTTP 20x. En ese momento, los datos está contenidos dentro de <b>oData</b>, con lo que podemos usarlos para renderizarlos en pantalla, o la funcionalidad que corresponda. Esta función será propia de cada operación del CRUD, así que no podemos usar una función genérica para la captura de este evento en todo momento. Tendremos que escribirla en cada caso.
+
+<h3>complete: function(oXMLHTTPReq, sTextStatus)</h3> Este el el callback a suministrar para el evento 'complete', que se produce cuando la petición ha terminado del todo, después de la ejecución del callback de los eventos <b>'error'</b> y <b>'success'</b>. De esa forma, podemos querar logear todas las peticiones, hayan ido bien o no, así que vamos a implementar la función de gestión de este evento: 
+
+<figure>
+  <figcaption class="filenameCode">/js/programa.js</figcaption>
+  <pre class="EnlighterJSRAW" data-enlighter-language="js" data-enlighter-linenumbers="false">
+function handleAjaxComplete(oXMLHTTPReq, sTextStatus) {
+    console.log('Entrando en complete... ');
+    console.log('Objeto XMLHTTPRequest');
+    console.log(oXMLHTTPReq);
+    console.log('TextStatus: ' + sTextStatus);
+    if(b_GLOBAL_Debug) {
+        toastr.info('Petición AJAX totalmente finalizada');        
+    }        
+}
+
+  </pre>
+</figure>
+
+De esta forma, el código de nuestra petición AJAX es bastante comprensible: Al pulsar el botón de carga, realizamos una petición AJAX al servicio <b>/php/read_gato.php</b>, que nos devuelve una estructura de datos de tipo <b>Array de objetos</b>, siendo cada objeto la representación de un registro (fila) de la entidad Gato. Tras recibir esos datos, los mostramos en HTML generando una tabla para ellos. Esa sería una correcta especificación de esta funcionalidad. Ahora, definamos el resto de operaciones que queremos realizar, y como las llevaríamos a cabo en nuestra aplicación.
+
+<br />
+
+<h2>Especificación de operaciones</h2><br />
+
+<h3>Crear nuevo (CREATE)</h3>Creamos un formulario, con campos adecuados para los de la entidad, y un botón que, al pulsar, enviará los datos del formulario a un servicio que los inserte dentro de la base de datos. El servicio debe informarnos de si la operación de inserción ha funcionado correctamente, y en función de ello, usaremos <b>Toastr</b> para mostrar un mensaje indicativo del resultado de la operación.
+
+<h3>Editar existente (UPDATE)</h3>En la tabla que se crea con la operación READ, se puede seleccionar una de las filas. Al hacerlo, aparecerá una nueva sección en la página, con los valores de los campos en un formulario, y un botón para poder enviar la información al servicio web que modificará el registro. Del mismo modo, el servicio web debe comunicarnos el éxito o fracaso de la operación. Al terminar la edición, tenemos que solicitar los datos al servicio de READ, y recargar la tabla de datos.
+
+<h3>Borrar existente (DELETE)</h3>En la tabla que sea crea con la operación READ, se agrega un checkbox inicial a cada fila. Se pueden seleccionar varios de ellos, y se agrega al final de la tabla un botón que envíe los datos de los registros seleccionados a un servicio web que los borre. Tras la operación, debe decirnos el resultado de la misma. Tras el borrado, tenemos que recargar los datos volviendo a pedirlos a nuestro servicio de READ.
+
+<br />
+
+De esta forma, quedan especificadas las operaciones a realizar. No puedo dejar de recalcar la inmensa importancia, a la hora de desarrollar código en condiciones, de realizar una tarea de análisis y diseño de lo que vamos a hacer, por trivial que resulte la tarea. A largo plazo, creamos una serie de hábitos que nos ayudan a escribir mejor código, sea el que sea el lenguaje de programación que estemos usando. Existen diferentes técnicas para llevarlo a cabo, pero nada como un cuaderno, bolígrafos de varios colores, tiempo y estar calmado. Esta especificación es muy sencilla, pero es un buen ejercicio de conceptualización.
+
+Vamos a ver como implementamos la especificación:
+
+Lo primero, y para nuestro ejemplo nos sirve, es que tiene que existir, en memoria, una copia de los datos que se están viendo actualmente en la tabla. Esto es así porque de esta forma, para facilitar ciertas operaciones. La operación de lectura (READ) ha quedado bastante clara como está implementada, teniendo en cuenta que es en el evento <b>'success'</b> de esta llamada cuando ese objeto en memoria con los datos se actualiza. Esto, en general, no es una práctica de desarrollo muy buena, pero dado lo mínimo de nuestro programa, nos sirve. Para ello, usamos el objeto siguiente:
+
+<figure>
+  <figcaption class="filenameCode">/js/programa.js</figcaption>
+  <pre class="EnlighterJSRAW" data-enlighter-language="js" data-enlighter-linenumbers="false">
+var o_GLOBAL_Gatos = null;      
+  </pre>
+</figure>
+
+Veamos de nuevo el manejador del evento 'success' de nuestra carga de datos:
+
+<figure>
+  <figcaption class="filenameCode">/js/programa.js</figcaption>
+  <pre class="EnlighterJSRAW" data-enlighter-language="js" data-enlighter-linenumbers="false">
+success: function (oDatosGatos) {
+    if(b_GLOBAL_Debug) {                
+        toastr.success("Datos de gatos cargados");                
+    }
+    o_GLOBAL_Gatos = oDatosGatos;
+    var sHTMLAdd = renderTablaTodosLosGatos(oDatosGatos);            
+    $("#contenidoTodosLosGatos").html(sHTMLAdd);            
+}
+  </pre>
+</figure>
+
+Por tanto, en cuanto recibimos los datos, actualizamos el contenido de la variable global. Esto es muy importante, porque si en una operación no realizásemos la actualización de este objeto, y dependiésemos de su sincronización con la base de datos (en el sentido de que tenga los mismos registros en la base de datos que en el objeto en memoria), podríamos tener algún disgusto. El programa podría funcionar mal, o incluso, depende de como lo hiciésemos, podría borrar datos incorrectos. Un desbarajuste, vamos. Así que, como convención, vamos a establecer lo siguiente: Tras realizar cualquier operación de nuestro CRUD, llamaremos a la función <b>cargarTodosLosGatos()</b>, para de esa forma asegurarnos de la sincronicidad entre ambos orígenes de datos.
+
+La funcionalidad de creación es bien simple. Enviamos los datos al servicio de creación de nuevo registro, y si este reponde correctamente, pues ya está hecho, en ese momento realizamos una llamada a <b>cargarTodosLosGatos()</b>, que recargará los datos. ¿Podríamos no tener que recargar todos los datos, dado que solo estamos insertando uno? Si, se podría, pero en nuestro ejercicio, que va sobre todo de AJAX y comunicación cliente-servidor, no vamos a entrar en como afinar nuestro programa demasiado, más allá de una funcionalidad básica.
+
+La edición también es muy simple. Al crear la tabla en la que mostramos los registros, agragamos un botón a cada fila, que realiza lo siguiente: Llama a la función <b>cargarDatosEdit(indice)</b>, siendo <b>indice</b> el valor de la fila actual (0, 1, 2, etc...). Una vez en esa función, usamos el objeto de memoria que contiene todos los datos, sacamos el UUID de ese registro, componemos un objeto que contiene los datos requeridos para la operación UPDATE, lo enviamos al servicio, y esperamos la respuesta positiva del mismo. Es interesante ver como, subdividiendo el problema en trozos (hacer esto, luego esto, etc...), que, al final son bastante triviales, simplifica inmensamente el desarrollo de código. No puedo dejar de recalcar la importancia de ser, incluso obvio, para que no haya dudas de ninguna clase en ningún momento de la implementación.
+
+La funcionalidad de borrado es también sencilla. Los checkboxes pertenecen a una clase <b>chkUUIDGato</b>, que nos permite, a la hora de pulsar el botón 'Borrar Seleccionados', ver los que están seleccionados, extraer el UUID del gato a partir de la propiedad id del elemento input, componer un array de UUIDs que queremos borrar, enviarlo al servicio web de borrado, y esperar la respuesta positiva del mismo. Una vez recibida, recargar los datos de la tabla.
+
+Nuestro programa puede no ser el mas bonito del mundo, pero funciona acorde a la especificación que nos hemos propuesto.
+
+¿Y en el servidor? ¿Qué contienen los servicios web?
+
+<figure>
+  <figcaption class="filenameCode">/php/create_gato.php</figcaption>
+  <pre class="EnlighterJSRAW" data-enlighter-language="php">
+$oConn = mysqli_connect("127.0.0.1", "root", "", "gatos");
+
+$sSQLInsertarGato = "INSERT INTO gatos VALUES (UUID(), ";
+$sSQLInsertarGato .= "'" . $_POST["nombre"] . "', ";
+$sSQLInsertarGato .= "'" . $_POST["raza"] . "', ";
+$sSQLInsertarGato .= "'" . $_POST["color"] . "', ";
+$sSQLInsertarGato .= "'" . $_POST["edad"] . "'";
+$sSQLInsertarGato .= ");";
+
+$oExecuteQuery = mysqli_query($oConn, $sSQLInsertarGato) or die("Error SQL");
+
+$oReturn = Array();
+$oReturn["error"] = false;
+$oReturn["code"] = "OK";
+
+echo json_encode($oReturn);
+  </pre>
+</figure>
+
+Analicemos un poco el código. Primero, declaramos un objeto de conexión a MySQL, con la función <b>mysqli_connect(HOST, USER, PASSWORD, BASE_DE_DATOS)</b>. Ese objeto de conexión es requerido para todas las consultas SQL que queramos lanzarle a la base de datos para su ejecución. Comenzamos la creación de una sentencia SQL de tipo INSERT, usando para ello los valores del array global de PHP <b>$_POST</b>, que contiene los datos que haya recibido el script a través del método HTTP POST. En PHP, el punto (.), es el operador de concatenación de cadenas de texto. Una vez tenemos la sentencia correctamente escrita, la lanzamos a la base de datos a través de la función <b>mysqli_query(OBJETO_CONN, SQL_EJECUTAR)</b>, usando un constructo especial de PHP: <b>function() or die()</b> significa: Si el resultado de esta función es un error, detén el script, mostrando el texto pasado a la función <b>die()</b> como parámetro. Si eso sucede, nuestro AJAX no recibirá lo que espera, y entrará en el manejador de error <b>handleAJAXError</b>, que hemos definido previamente. Si la sentencia se ejecuta correctamente (y si hemos pasado valores correctos, debería), creamos un array de campos de texto (las claves no tienen por qué ser números en PHP, los arrays pueden tener claves de texto), y lo soltamos como JSON, usando <b>json_encode()</b> para ello.
+
+PHP es un lenguaje muy sencillo para realizar pequeñas operaciones y pruebas de concepto, así que para los que estén siguiendo este tutorial y sean principiantes en desarrollo web, PHP tiene muchísimo que ofrecer.
+
+Veamos ahora el servicio web de actualización:
+
+<figure>
+  <figcaption class="filenameCode">/php/edit_gato.php</figcaption>
+  <pre class="EnlighterJSRAW" data-enlighter-language="php">
+$oConn = mysqli_connect("127.0.0.1", "root", "", "gatos");
+
+$sSQLEditarGato = "UPDATE gatos SET ";
+$sSQLEditarGato .= " nombre = '" . $_POST["nombre"] . "', ";
+$sSQLEditarGato .= " raza = '" . $_POST["raza"] . "', ";
+$sSQLEditarGato .= "color = '" . $_POST["color"] . "', ";
+$sSQLEditarGato .= "edad = '" . $_POST["edad"] . "'";
+$sSQLEditarGato .= " WHERE uuid = '".$_POST["uuid"] ."'";
+
+$oExecuteQuery = mysqli_query($oConn, $sSQLEditarGato) or die("Error SQL");
+
+$oReturn = Array();
+$oReturn["error"] = false;
+$oReturn["code"] = "OK";
+
+echo json_encode($oReturn);
+  </pre>
+</figure>
+
+Como vemos, es realmente casi idéntico al de creación, solo que lo que estamos haciendo es ejecutar una sentencia de tipo UPDATE, que tiene su propia sintaxis. Igual que antes, o el programa muere, o devolvemos JSON indicando que todo fue OK.
+
+Por último, la funcionalidad de borrado:
+
+<figure>
+  <figcaption class="filenameCode">/php/delete_gato.php</figcaption>
+  <pre class="EnlighterJSRAW" data-enlighter-language="php">
+$aUUIDsToDelete = $_POST["uuids_delete"];
+
+$oConn = mysqli_connect("127.0.0.1", "root", "", "gatos");
+
+for($i=0;$i< count($aUUIDsToDelete); $i++) {
+    $sSQLDelete = "DELETE FROM gatos WHERE uuid = '".$aUUIDsToDelete[$i]."'";
+    $oExecuteQuery = mysqli_query($oConn, $sSQLDelete) or die("Error SQL");
+}
+
+$oReturn = Array();
+$oReturn["error"] = false;
+$oReturn["code"] = "OK";
+
+echo json_encode($oReturn);      
+  </pre>
+</figure>
+
+Esto es un poco diferente. Iteramos el array <b>$_POST["uuids_delete"]</b>, y vamos ejecutando las sentencias SQL de borrado. Como en el resto de los servicios web, enviamos la respuesta de que todo fue OK.
+
+Y esto es todo por ahora. En un próximo tutorial, segunda parte de este, veremos como hacer las cosas de un modo mas profesional, agrupando nuestros servicios web, usado para ello Silex, y como implementar nuestro AJAX de una forma más genérica. 

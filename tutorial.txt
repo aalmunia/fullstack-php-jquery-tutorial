@@ -1,0 +1,5 @@
+<p>En este artículo (pensado para nivel básico - medio), vamos a ver como funciona una petición HTTP usando AJAX, a un servicio web que también definiremos nosotros.</p>
+<p>Para ello, las tecnologías y librerías que vamos a usar son las siguientes: </p>
+    <ul>
+    
+    </ul> 
